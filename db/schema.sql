@@ -81,3 +81,16 @@ create table if not exists backups (
   reason     text,
   data       jsonb not null
 );
+
+-- Supabase security: tables in the "public" schema are reachable through Supabase's public Data API.
+-- Turning on Row Level Security (with NO policies) blocks that door completely.
+-- Our server connects with the database owner role, which is not affected by RLS.
+alter table employees        enable row level security;
+alter table employee_scorers enable row level security;
+alter table dept_access      enable row level security;
+alter table kpis             enable row level security;
+alter table kpi_applies      enable row level security;
+alter table sub_metrics      enable row level security;
+alter table scores           enable row level security;
+alter table audit_log        enable row level security;
+alter table backups          enable row level security;
