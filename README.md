@@ -6,17 +6,20 @@ Proper web portal - **Google Apps Script / Google Sheet ki zaroorat nahi**.
 |---|---|
 | Frontend | `public/index.html` (aapka dashboard design, same UI) |
 | Backend | Vercel Serverless Functions (`api/`, Node 20+) |
-| Database | PostgreSQL (Neon via Vercel Marketplace recommended) |
+| Database | PostgreSQL (Supabase, Neon or any Postgres) |
 | Login | Google Sign-In, sirf `@rankviz.com`; server-side verify + secure HttpOnly cookie (12 ghante) |
 
 Permissions server par check hoti hain (browser par nahi): HR sab kuch, CEO poori company dekh sakta hai, Scorer apni team (+ HR ne jo departments diye) dekh/score kar sakta hai, Employee sirf apna dashboard.
 
 ## Setup (ek baar)
 
-### 1. Database
-Vercel project > **Storage > Create Database > Neon (Postgres)** > project se connect karein. `DATABASE_URL` khud env vars me add ho jata hai.
-Phir Neon **SQL Editor** me `db/schema.sql` ka poora content paste karke **Run** karein.
-(Ya apne computer se: `DATABASE_URL=... npm run db:setup`)
+### 1. Database (Supabase)
+1. supabase.com > New project (password yaad rakhein).
+2. **SQL Editor > New query** > `db/schema.sql` ka poora content paste karein > **Run**.
+3. **Connect** button (ya Project Settings > Database) > **Transaction pooler** wali connection string copy karein (port `6543`).
+   `[YOUR-PASSWORD]` ki jagah apna password likhein. Password me `@ # / ?` jaisa koi symbol ho to use URL-encode karein (`@` = `%40`), ya simple password rakh lein.
+4. Ye string Vercel me `DATABASE_URL` banegi (neeche step 3).
+> **Direct connection (`db.xxx.supabase.co:5432`) use na karein**: wo Vercel par kaam nahi karta (IPv6). Pooler wali use karein.
 
 ### 2. Google login (OAuth Client ID)
 1. console.cloud.google.com > project > **APIs & Services > OAuth consent screen** > User type **Internal** (Workspace) > Create.
@@ -27,7 +30,7 @@ Phir Neon **SQL Editor** me `db/schema.sql` ka poora content paste karke **Run**
 ### 3. Vercel Environment Variables
 | Name | Value |
 |---|---|
-| `DATABASE_URL` | Neon ne khud add kiya hoga |
+| `DATABASE_URL` | Supabase Transaction pooler string (step 1) |
 | `GOOGLE_CLIENT_ID` | step 2 wali Client ID |
 | `ALLOWED_DOMAIN` | `rankviz.com` |
 | `SESSION_SECRET` | random lamba text (`openssl rand -hex 32`) |
