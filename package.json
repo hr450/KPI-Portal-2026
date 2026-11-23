@@ -1,0 +1,17 @@
+{
+  "name": "rankviz-kpi-portal",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Rankviz KPI Portal - static frontend + Vercel serverless API + Postgres",
+  "scripts": {
+    "db:setup": "node scripts/setup-db.mjs",
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "google-auth-library": "^9.15.0",
+    "jose": "^5.9.6",
+    "pg": "^8.13.1"
+  },
+  "engines": { "node": ">=20" }
+}
