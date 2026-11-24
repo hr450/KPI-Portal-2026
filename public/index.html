@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!DOCTYPE html><html><head><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Rankviz KPI Dashboard</title>
 <style>
 :root{--bg:#0A1F44;--bg2:#12306B;--ink:#0A1F44;--mut:#6B7A99;--line:#E3E9F5;--blue:#2F6BFF}
@@ -196,10 +196,14 @@ function fillPV(){const o=P.t=='m'?months:P.t=='q'?[...new Set(months.map(qOf))]
  document.getElementById('pt').value=P.t;document.getElementById('pv').innerHTML=o.map(x=>`<option value="${x}" ${x==P.v?'selected':''}>${pLab({t:P.t,v:x})}</option>`).join('')}
 const SM=()=>P.t=='m'?P.v:defMonth();   // month used for scoring / status
 /* ---------- data ---------- */
-function load(){const rf=document.getElementById('rf');rf.disabled=true;rf.textContent='⟳ Refreshing…';google.script.run.withSuccessHandler(b=>{rf.disabled=false;rf.textContent='⟳ Refresh';A=null;B=b;S={};b.scores.forEach(r=>{((S[r[1]]=S[r[1]]||{})[r[0]]=S[r[1]][r[0]]||{})[r[2]]=r[3]});
+function applyBoot(b){A=null;B=b;S={};b.scores.forEach(r=>{((S[r[1]]=S[r[1]]||{})[r[0]]=S[r[1]][r[0]]||{})[r[2]]=r[3]});
  const cur=curMonth();months=[];for(let y=2026,m=7;y+'-'+pad(m)<=cur;m++){if(m>12){m=1;y++}months.push(y+'-'+pad(m))}
  if(!P.v)P.v=defMonth();fillPV();document.getElementById('who').textContent=b.me+' · '+b.role+' · updated '+b.updated;
- if(!sel&&B.list.length==1&&B.list[0].self)view='me';render()}).withFailureHandler(e=>{rf.disabled=false;rf.textContent='⟳ Refresh';document.getElementById('main').innerHTML='<div class="msg">'+e.message+'</div>'}).getBoot()}
+ if(!sel&&B.list.length==1&&B.list[0].self)view='me';render()}
+const RVC='rv_boot';
+function load(){const rf=document.getElementById('rf');rf.disabled=true;rf.textContent='⟳ Refreshing…';
+ if(!B){try{const c=JSON.parse(localStorage.getItem(RVC)||'null');if(c&&c.role&&c.list)applyBoot(c)}catch(e){}}
+ google.script.run.withSuccessHandler(b=>{rf.disabled=false;rf.textContent='⟳ Refresh';try{localStorage.setItem(RVC,JSON.stringify(b))}catch(e){}applyBoot(b)}).withFailureHandler(e=>{rf.disabled=false;rf.textContent='⟳ Refresh';if(!B)document.getElementById('main').innerHTML='<div class="msg">'+e.message+'</div>'}).getBoot()}
 function ov(em,m,kpi){const d=(S[em]||{})[m]||{};let a=0,w=0;B.subs.forEach(s=>{if(d[s.id]!=null&&(!kpi||s.kpi==kpi)){a+=d[s.id]*s.w;w+=s.w}});return w?a/w:null}
 const pv=(em,p,kpi)=>av(pM(p).map(m=>ov(em,m,kpi)));
 const ps=(em,p,sid)=>av(pM(p).map(m=>((S[em]||{})[m]||{})[sid]));
