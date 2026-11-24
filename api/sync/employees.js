@@ -35,33 +35,59 @@ export default async function handler(req, res) {
 
   try {
     await tx(async (c) => {
+      // 1) validate + de-duplicate by email
+      const byEmail = new Map();
       for (const e of list) {
         const name = clean(e.name), email = clean(e.email).toLowerCase(), dept = clean(e.dept);
         const prevEmail = clean(e.prevEmail).toLowerCase();
-        const status = e.active === false ? 'Left' : 'Active';
         if (!name) { out.skipped.push({ email, reason: 'no name' }); continue; }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !email.endsWith('@' + domain())) {
           out.skipped.push({ email, reason: 'email must be @' + domain() }); continue;
         }
+        byEmail.set(email, { name, email, dept, prevEmail, status: e.active === false ? 'Left' : 'Active' });
+      }
+      const rows = [...byEmail.values()];
+      if (!rows.length) return;
 
-        let row = (await c.query('select id, role from employees where email = $1', [email])).rows[0];
-        if (!row && prevEmail && prevEmail !== email) {          // email was corrected in Attendance
-          row = (await c.query('select id, role from employees where email = $1', [prevEmail])).rows[0];
-          if (row) await c.query('update employees set email = $2 where id = $1', [row.id, email]);
-        }
+      // 2) ONE query to see who already exists (a loop of queries is far too slow on a remote DB)
+      const lookup = [...new Set(rows.flatMap((r) => [r.email, r.prevEmail].filter(Boolean)))];
+      const found = (await c.query('select id, email, role from employees where email = any($1::text[])', [lookup])).rows;
+      const known = new Map(found.map((r) => [r.email, r]));
 
-        if (row) {
-          // Never lock HR out of the portal because of an Attendance change.
-          if (row.role === 'HR') await c.query('update employees set name = $2 where id = $1', [row.id, name]);
-          else await c.query('update employees set name = $2, status = $3 where id = $1', [row.id, name, status]);
-          out.updated++;
-        } else {
-          await c.query(
-            `insert into employees (name, email, dept, role, scored, status, join_month) values ($1,$2,$3,'Staff',true,$4,$5)`,
-            [name, email, dept, status, curMonth()]);
-          out.created++;
+      // 3) email corrected in Attendance -> move the existing row to the new email (rare)
+      for (const r of rows) {
+        if (!known.has(r.email) && r.prevEmail && r.prevEmail !== r.email && known.has(r.prevEmail)) {
+          const old = known.get(r.prevEmail);
+          await c.query('update employees set email = $2 where id = $1', [old.id, r.email]);
+          known.set(r.email, { ...old, email: r.email });
+          known.delete(r.prevEmail);
         }
       }
+
+      const upd = rows.filter((r) => known.has(r.email));
+      const ins = rows.filter((r) => !known.has(r.email));
+
+      // 4) existing people: name + Active/Left only (HR keeps their status so nobody gets locked out)
+      if (upd.length) {
+        const r = await c.query(
+          `update employees e set name = v.name, status = case when e.role = 'HR' then e.status else v.status end
+             from unnest($1::text[], $2::text[], $3::text[]) as v(email, name, status)
+            where e.email = v.email`,
+          [upd.map((x) => x.email), upd.map((x) => x.name), upd.map((x) => x.status)]);
+        out.updated = r.rowCount;
+      }
+
+      // 5) new people: all in one insert
+      if (ins.length) {
+        const r = await c.query(
+          `insert into employees (name, email, dept, role, scored, status, join_month)
+           select v.name, v.email, v.dept, 'Staff', true, v.status, $5::text
+             from unnest($1::text[], $2::text[], $3::text[], $4::text[]) as v(name, email, dept, status)
+           on conflict (email) do nothing`,
+          [ins.map((x) => x.name), ins.map((x) => x.email), ins.map((x) => x.dept), ins.map((x) => x.status), curMonth()]);
+        out.created = r.rowCount;
+      }
+
       if (out.created || out.updated) {
         await c.query('insert into audit_log (actor, action, detail) values ($1,$2,$3)',
           ['attendance-sync', 'syncEmployees', JSON.stringify({ created: out.created, updated: out.updated })]);
