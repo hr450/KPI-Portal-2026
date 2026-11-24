@@ -70,6 +70,7 @@
     const d = await post('/api/rpc', { fn: fn, args: args });
     if (!d.ok) {
       if (d.code === 'AUTH') {
+        try { localStorage.removeItem('rv_boot'); } catch (e) {}
         if (retried) throw new Error(d.error);
         await login(d.error === 'Please sign in.' ? '' : d.error);
         return rpc(fn, args, true);
@@ -88,7 +89,7 @@
   (window.google = window.google || {}).script = { run: mk() };
 
   /* ---------- sign-out link in the sidebar ---------- */
-  window.rvSignOut = async () => { try { await post('/api/auth/logout'); } catch (e) {} location.reload(); };
+  window.rvSignOut = async () => { try { localStorage.removeItem('rv_boot'); } catch (e) {} try { await post('/api/auth/logout'); } catch (e) {} location.reload(); };
   new MutationObserver(() => {
     const u = document.querySelector('.suser');
     if (u && !u.querySelector('.rv-so')) {
