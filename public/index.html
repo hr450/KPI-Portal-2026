@@ -177,7 +177,7 @@ tr:hover>td{background:#FAFBFE}.kh td{background:#F4F7FD!important;color:#2F55D4
 body:not(.rv-ok) #side,body:not(.rv-ok) header,body:not(.rv-ok) #main,body:not(.rv-ok) #mnu{visibility:hidden}
 
 /* ---- custom dropdowns (replaces native <select> look everywhere) ---- */
-button.dd{display:inline-flex;align-items:center;justify-content:space-between;gap:10px;box-sizing:border-box;max-width:100%;min-height:34px;padding:8px 34px 8px 12px;font:600 12.5px/1.2 inherit;font-family:inherit;color:#1B2740;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%236B7A99' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;border:1px solid #DDE3EE;border-radius:8px;cursor:pointer;text-align:left;transition:border-color .15s,box-shadow .15s,background-color .15s;box-shadow:none;transform:none}
+button.dd{display:inline-flex;align-items:center;justify-content:space-between;gap:10px;box-sizing:border-box;max-width:100%;min-height:34px;padding:8px 34px 8px 12px;font-family:inherit;font-size:12.5px;font-weight:600;line-height:1.2;color:#1B2740;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%236B7A99' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;border:1px solid #DDE3EE;border-radius:8px;cursor:pointer;text-align:left;transition:border-color .15s,box-shadow .15s,background-color .15s;box-shadow:none;transform:none}
 button.dd:hover{background-color:#F8FAFD;border-color:#B9C7E6}
 button.dd:focus-visible,button.dd[aria-expanded=true]{outline:0;border-color:#2F6BFF;box-shadow:0 0 0 3px rgba(47,107,255,.16)}
 button.dd:disabled{opacity:.55;cursor:not-allowed}
@@ -220,7 +220,7 @@ const SM=()=>P.t=='m'?P.v:defMonth();   // month used for scoring / status
 /* ---------- data ---------- */
 function applyBoot(b){document.body.classList.add('rv-ok');A=null;B=b;S={};b.scores.forEach(r=>{((S[r[1]]=S[r[1]]||{})[r[0]]=S[r[1]][r[0]]||{})[r[2]]=r[3]});
  const cur=curMonth();months=[];for(let y=2026,m=7;y+'-'+pad(m)<=cur;m++){if(m>12){m=1;y++}months.push(y+'-'+pad(m))}
- if(!P.v)P.v=defMonth();fillPV();document.getElementById('who').textContent=b.me+' · '+b.role+' · updated '+b.updated;
+ if(!P.v)P.v=defMonth();fillPV();{const w=document.getElementById('who'),now=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Karachi',day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true}).format(new Date());w.textContent=b.me+' · '+b.role+' · updated '+now;w.title='Last score saved: '+b.updated}
  if(!sel&&B.list.length==1&&B.list[0].self)view='me';render()}
 const RVC='rv_boot';
 function load(){if(/[?&]sso=1/.test(location.search)){try{localStorage.removeItem(RVC)}catch(e){}try{history.replaceState(null,'',location.pathname)}catch(e){}}
