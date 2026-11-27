@@ -223,10 +223,11 @@ function applyBoot(b){document.body.classList.add('rv-ok');A=null;B=b;S={};b.sco
  if(!P.v)P.v=defMonth();fillPV();{const w=document.getElementById('who'),now=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Karachi',day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true}).format(new Date());w.textContent=b.me+' · '+b.role+' · updated '+now;w.title='Last score saved: '+b.updated}
  if(!sel&&B.list.length==1&&B.list[0].self)view='me';render()}
 const RVC='rv_boot';
-function load(){if(/[?&]sso=1/.test(location.search)){try{localStorage.removeItem(RVC)}catch(e){}try{history.replaceState(null,'',location.pathname)}catch(e){}}
+const hint=()=>{const m=/(?:^|;\s*)rv_in=([0-9a-f]+)/.exec(document.cookie);return m?m[1]:''};
+function load(){if(/[?&]sso=1/.test(location.search)){try{history.replaceState(null,'',location.pathname)}catch(e){}}
  const rf=document.getElementById('rf');rf.disabled=true;rf.textContent='⟳ Refreshing…';
- if(!B&&/(?:^|;\s*)rv_in=1/.test(document.cookie)){try{const c=JSON.parse(localStorage.getItem(RVC)||'null');if(c&&c.role&&c.list)applyBoot(c)}catch(e){}}
- google.script.run.withSuccessHandler(b=>{rf.disabled=false;rf.textContent='⟳ Refresh';try{localStorage.setItem(RVC,JSON.stringify(b))}catch(e){}applyBoot(b)}).withFailureHandler(e=>{rf.disabled=false;rf.textContent='⟳ Refresh';document.body.classList.add('rv-ok');if(!B)document.getElementById('main').innerHTML='<div class="msg">'+e.message+'</div>'}).getBoot()}
+ if(!B&&hint()){try{const c=JSON.parse(localStorage.getItem(RVC)||'null');if(c&&c.u===hint()&&c.b&&c.b.role&&c.b.list)applyBoot(c.b)}catch(e){}}
+ google.script.run.withSuccessHandler(b=>{rf.disabled=false;rf.textContent='⟳ Refresh';try{localStorage.setItem(RVC,JSON.stringify({u:hint(),b:b}))}catch(e){}applyBoot(b)}).withFailureHandler(e=>{rf.disabled=false;rf.textContent='⟳ Refresh';document.body.classList.add('rv-ok');if(!B)document.getElementById('main').innerHTML='<div class="msg">'+e.message+'</div>'}).getBoot()}
 function ov(em,m,kpi){const d=(S[em]||{})[m]||{};let a=0,w=0;B.subs.forEach(s=>{if(d[s.id]!=null&&(!kpi||s.kpi==kpi)){a+=d[s.id]*s.w;w+=s.w}});return w?a/w:null}
 const pv=(em,p,kpi)=>av(pM(p).map(m=>ov(em,m,kpi)));
 const ps=(em,p,sid)=>av(pM(p).map(m=>((S[em]||{})[m]||{})[sid]));
